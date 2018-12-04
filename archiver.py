@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.6
 
 """
 filetype signature: 76 69 6b 74 6f 72
@@ -7,17 +7,17 @@ format: signature (6 bytes), number of elements (4 bytes), [md5 hash of filename
 
 import glob, os, sys, struct, argparse, hashlib
 
-def generate_archive(files):
+def generate_archive(archive_name, files):
 	signature = [0x76, 0x69, 0x6b, 0x74, 0x6f, 0x72]
 	nulls = [00, 00, 00, 00, 00, 00, 00, 00, 00, 00]
 
 	header = signature
 	# number of files (and ToC chunks)
 	header.extend(((32 - len(files).bit_length()) // 8) * [00] + [len(files)])
-	body = []
 
 	current_offset = 10
 
+	# generate header
 	for file in files:
 		m = hashlib.md5()
 		m.update(os.path.basename(file.name).encode('utf-8'))
@@ -30,16 +30,23 @@ def generate_archive(files):
 		header.extend(((32 - current_offset.bit_length()) // 8) * [00] + [current_offset])
 		current_offset += file.tell() + 10
 
+	archive = open(archive_name, 'wb')
+	# write header
+	archive.write(bytearray(header))
+
+	for file in files:
 		# padding
-		body.extend(nulls)
+		archive.write(bytearray(nulls))
 
 		# file content
-		content = file.read()
-		body.extend(content)
+		chunk = file.read(1024)
+		while(chunk):
+			archive.write(chunk)
+			chunk = file.read(1024)
 
-		print(f'Archiving file {file.name} checksum {m.hexdigest()} size {file.tell()}')
+		print(f'Archived file {file.name} checksum {m.hexdigest()} size {file.tell()}')
 
-	return header + body
+	return archive
 
 def main():
 	parser = argparse.ArgumentParser(description='vn archive generator')
@@ -55,13 +62,11 @@ def main():
 	files = []
 	os.chdir(args.input_dir)
 	for file in glob.glob('*'):
-		files.append( open(file, mode='rb'))
-
-	archive = generate_archive(files)
+		files.append(open(file, mode='rb'))
 
 	os.chdir('../')
-	with open(f'./{args.out}', 'wb') as out:
-		out.write(bytearray(archive))
+	generate_archive(args.out, files)
+
 	print('Done!')
 
 if __name__=='__main__':
