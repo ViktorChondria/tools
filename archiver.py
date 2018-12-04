@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
 
 """
 filetype signature: 76 69 6b 74 6f 72
@@ -34,7 +34,6 @@ def generate_archive(archive_name, files):
 
     archive = open(archive_name, 'wb')
     # write header
-    print(header)
     archive.write(bytearray(header))
 
     for file in files:
