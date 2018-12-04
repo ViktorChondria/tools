@@ -52,7 +52,7 @@ def generate_archive(archive_name, files):
     return archive
 
 def main():
-    parser = argparse.ArgumentParser(description='vn archive generator')
+    parser = argparse.ArgumentParser(description='Kansai engine asset archive generator')
     parser.add_argument('input_dir', action='store')
     parser.add_argument('-o', action='store', dest='out', default=None)
     
